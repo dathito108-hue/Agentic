@@ -36,6 +36,7 @@ Clone this repository, then from its directory:
 
 ```powershell
 npm install
+npm run check
 baw wallet status --json
 baw wallet settings --json
 npm run inspect
