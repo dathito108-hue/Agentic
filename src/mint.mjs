@@ -67,7 +67,10 @@ async function verifyWalletAndDeveloperMode() {
   if (status.status !== "CONNECTED") fail("Binance Agentic Wallet is not CONNECTED. Connect it with the Binance Agentic Wallet Skill first.");
 
   const addressResult = dataOf(await baw(["wallet", "address"], "wallet address"));
-  const address = addressResult.address || addressResult.walletAddress || addressResult;
+  const bscEntry = Array.isArray(addressResult.addresses)
+    ? addressResult.addresses.find(item => String(item.binanceChainId) === String(CONFIG.chainId))
+    : null;
+  const address = bscEntry?.address || addressResult.address || addressResult.walletAddress || addressResult;
   if (typeof address !== "string" || getAddress(address) !== getAddress(CONFIG.wallet)) {
     fail("Connected wallet does not match the requested wallet " + CONFIG.wallet + ". No transaction was prepared.");
   }
