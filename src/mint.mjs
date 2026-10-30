@@ -1,7 +1,7 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { readFile, writeFile } from "node:fs/promises";
-import { Interface, JsonRpcProvider, getAddress } from "ethers";
+import { Contract, Interface, JsonRpcProvider, getAddress } from "ethers";
 
 const execFileAsync = promisify(execFile);
 
@@ -84,7 +84,7 @@ async function readMintConditions(wallet) {
   const network = await provider.getNetwork();
   if (Number(network.chainId) !== CONFIG.chainId) fail("RPC returned the wrong chain ID.");
 
-  const contract = new (await import("ethers")).Contract(CONFIG.contract, ABI, provider);
+  const contract = new Contract(CONFIG.contract, ABI, provider);
   let agentId, a, b, totalCost, allowedQty;
   try {
     agentId = await contract.agentIdOf(wallet);
@@ -100,6 +100,7 @@ async function readMintConditions(wallet) {
 
   const characterCount = Array.from(agentId).length;
   const answer = BigInt(a) * BigInt(b) + BigInt(characterCount);
+  if (answer !== 1263n) fail("The live challenge computes answer=" + answer.toString() + ", not the explicitly authorized 1263. Stopping without preparing a transaction.");
   if (BigInt(allowedQty) === 0n) fail("allowedQty is 0. This wallet has reached its mint limit.");
   if (BigInt(allowedQty) < CONFIG.qty) fail("The contract does not allow qty=1 for this wallet.");
   if (BigInt(totalCost) !== CONFIG.expectedValueWei) {
@@ -147,6 +148,20 @@ async function prepare() {
   const previewData = dataOf(preview);
   const requestId = previewData.requestId;
   if (!requestId || typeof requestId !== "string") fail("Preview did not return a requestId. Execute is forbidden.");
+  const parsedTx = previewData.parsedTx || {};
+  if (!parsedTx.contractAddress || parsedTx.contractAddress.toLowerCase() !== CONFIG.contract.toLowerCase()) {
+    fail("Preview did not confirm the exact target contract. Execute is forbidden.");
+  }
+  if (BigInt(parsedTx.amount ?? -1) !== CONFIG.expectedValueWei) {
+    fail("Preview amount does not equal the exact authorized 667000000000000 wei. Execute is forbidden.");
+  }
+  if (previewData.requireConfirmation !== true) {
+    fail("Binance preview does not require Binance App confirmation. Direct broadcast is forbidden for this request.");
+  }
+  const simulation = previewData.simulationResult || {};
+  if ((simulation.allowanceChanges || []).length !== 0 || (simulation.authorityChanges || []).length !== 0) {
+    fail("Preview contains an allowance or authority change. This request is mint-only; execute is forbidden.");
+  }
 
   const record = {
     createdAt: new Date().toISOString(),
