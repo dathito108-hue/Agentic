@@ -1,0 +1,19 @@
+{
+  "name": "agentic-agentical-glyphs",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Fail-closed Agentical Glyphs mint helper using Binance Agentic Wallet CLI",
+  "scripts": {
+    "inspect": "node src/mint.mjs inspect",
+    "prepare": "node src/mint.mjs prepare",
+    "execute": "node src/mint.mjs execute",
+    "receipt": "node src/mint.mjs receipt"
+  },
+  "dependencies": {
+    "ethers": "^6.15.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
