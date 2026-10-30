@@ -8,7 +8,8 @@
     "inspect": "node src/mint.mjs inspect",
     "prepare": "node src/mint.mjs prepare",
     "execute": "node src/mint.mjs execute",
-    "receipt": "node src/mint.mjs receipt"
+    "receipt": "node src/mint.mjs receipt",
+    "check": "node --check src/mint.mjs"
   },
   "dependencies": {
     "ethers": "^6.15.0"
